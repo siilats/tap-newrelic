@@ -4,19 +4,31 @@
 
 Build with the [Singer SDK](https://gitlab.com/meltano/singer-sdk).
 
+It uses the [NerdGraph API](https://docs.newrelic.com/docs/apis/nerdgraph/get-started/introduction-new-relic-nerdgraph/) to fetch data using [NRQL](https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/get-started/nrql-syntax-clauses-functions/).
+
+Currently, only synthetics checks data (`SyntheticCheck`) is currently supported. However it
+should be streightforward to add [other data sources](https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/get-started/introduction-nrql-new-relics-query-language/#what-you-can-query), PRs accepted.
+
 ## Installation
 
-- [ ] `Developer TODO:` Update the below as needed to correctly describe the install procedure. For instance, if you do not have a PyPi repo, or if you want users to directly install from your git repo, you can modify this step as appropriate.
-
 ```bash
-pipx install tap-newrelic
+pip install tap-newrelic
 ```
 
 ## Configuration
 
 ### Accepted Config Options
 
-- [ ] `Developer TODO:` Provide a list of config options accepted by the tap.
+```js
+{
+  // required:
+  "api_key": "ABCD-XXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "account_id": 12345678,
+  "start_date": "2021-01-00T00:00:00Z",
+  // optional, defaults to https://api.newrelic.com/graphql
+  "api_url": "https://api.eu.newrelic.com/graphql"
+}
+```
 
 A full list of supported settings and capabilities for this
 tap is available by running:
@@ -27,7 +39,7 @@ tap-newrelic --about
 
 ### Source Authentication and Authorization
 
-- [ ] `Developer TODO:` If your tap requires special access on the source system, or any special authentication requirements, provide those here.
+Use of the API requires an [API Key](https://docs.newrelic.com/docs/apis/nerdgraph/get-started/introduction-new-relic-nerdgraph/#explorer).
 
 ## Usage
 
@@ -40,10 +52,6 @@ tap-newrelic --version
 tap-newrelic --help
 tap-newrelic --config CONFIG --discover > ./catalog.json
 ```
-
-## Developer Resources
-
-- [ ] `Developer TODO:` As a first step, scan the entire project for the text "`TODO:`" and complete any recommended steps, deleting the "TODO" references once completed.
 
 ### Initialize your Development Environment
 
@@ -72,9 +80,6 @@ poetry run tap-newrelic --help
 _**Note:** This tap will work in any Singer environment and does not require Meltano.
 Examples here are for convenience and to streamline end-to-end orchestration scenarios._
 
-Your project comes with a custom `meltano.yml` project file already created. Open the `meltano.yml` and follow any _"TODO"_ items listed in
-the file.
-
 Next, install Meltano (if you haven't already) and any needed plugins:
 
 ```bash
@@ -96,5 +101,5 @@ meltano elt tap-newrelic target-jsonl
 
 ### Singer SDK Dev Guide
 
-See the [dev guide](../../docs/dev_guide.md) for more instructions on how to use the Singer SDK to 
+See the [dev guide](https://gitlab.com/meltano/singer-sdk/-/blob/main/docs/dev_guide.md) for more instructions on how to use the Singer SDK to
 develop your own taps and targets.

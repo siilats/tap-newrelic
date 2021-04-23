@@ -16,37 +16,25 @@ from singer_sdk.typing import (
     StringType,
 )
 
-# TODO: Import your custom stream types here:
 from tap_newrelic.streams import (
-    NewRelicStream,
-
-    UsersStream,
-    GroupsStream,
-
+    SyntheticCheckStream,
 )
 
-
-# TODO: Compile a list of custom stream types here
-#       OR rewrite discover_streams() below with your custom logic.
 STREAM_TYPES = [
-    UsersStream,
-    GroupsStream,
+    SyntheticCheckStream,
 ]
-
 
 class TapNewRelic(Tap):
     """NewRelic tap class."""
 
     name = "tap-newrelic"
 
-    # TODO: Update this section with the actual config values you expect:
     config_jsonschema = PropertiesList(
-        Property("auth_token", StringType, required=True),
-        Property("project_ids", ArrayType(StringType), required=True),
-        Property("start_date", DateTimeType),
-        Property("api_url", StringType, default="https://api.mysample.com"),
+        Property("api_key", StringType, required=True),
+        Property("api_url", StringType, default="https://api.newrelic.com/graphql"),
+        Property("account_id", IntegerType, required=True),
+        Property("start_date", DateTimeType, required=True),
     ).to_dict()
-
 
     def discover_streams(self) -> List[Stream]:
         """Return a list of discovered streams."""
