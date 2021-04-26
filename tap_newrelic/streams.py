@@ -31,6 +31,7 @@ class NewRelicStream(GraphQLStream):
     replication_key = "timestamp"
     is_timestamp_replication_key = True
     is_sorted = True
+    latest_timestamp = None
 
     query = """
         query ($accountId: Int!, $query: Nrql!) {
@@ -62,7 +63,10 @@ class NewRelicStream(GraphQLStream):
         next_page_token = next_page_token or self.get_starting_timestamp(partition)
         return {
             "accountId": self.config.get("account_id"),
-            "query": self.nqrl_query.format(next_page_token.strftime("%Y-%m-%d %H:%M:%S"))
+            "query": self.nqrl_query.format(
+                next_page_token.strftime("%Y-%m-%d %H:%M:%S"),
+                self.get_replication_key_signpost(partition=partition).strftime("%Y-%m-%d %H:%M:%S"),
+            )
         }
 
     def prepare_request_payload(
@@ -70,47 +74,44 @@ class NewRelicStream(GraphQLStream):
     ) -> Optional[dict]:
         res = super().prepare_request_payload(partition, next_page_token)
         res["query"] = self.query # TODO: GraphQLStream wraps the query in `query { }` but we need args
+        nqrl = res["variables"]["query"]
+        self.logger.debug(f"nqrl: {nqrl}")
         return res
 
     def get_next_page_token(self, response, previous_token):
-        resp_json = response.json()
-        if len(resp_json["data"]["actor"]["account"]["nrql"]["results"]) == 0:
+        latest = pendulum.parse(self.latest_timestamp)
+        if self.results_count == 0:
+            return None
+        if previous_token and latest == previous_token:
             return None
 
-        # Annoyingly, NRQL's `SINCE` is inclusive, so at the end we get the same token
-        # twice
-        if previous_token and self.latest_row["timestamp"] <= previous_token:
-            return None
-
-        return self.latest_row["timestamp"]
+        return latest
 
     def transform_row(self, row: dict) -> dict:
-        row["timestamp"] = pendulum.from_timestamp(row["timestamp"] / 1000)
+        row["timestamp"] = str(pendulum.from_timestamp(row["timestamp"] / 1000))
         return { inflection.underscore(k): v for k, v in row.items() }
 
     def parse_response(self, response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
         resp_json = response.json()
-        for row in resp_json["data"]["actor"]["account"]["nrql"]["results"]:
-            self.latest_row = self.transform_row(row)
-            yield self.latest_row
-
-    def get_replication_key_signpost(
-        self, partition: Optional[dict]
-    ):
-        # This represents the highest allowed replication_key. I'm sure
-        # it's useful for partitioning or something. The SDK sets the
-        # default to the time that the stream was started, but most streams
-        # including this one continue to get records, so new records may be
-        # added while the pipeline runs. Here we override it to explictly
-        # disable the feature.
-        return None
+        results = resp_json["data"]["actor"]["account"]["nrql"]["results"]
+        self.results_count = len(results)
+        for row in results:
+            latest_row = self.transform_row(row)
+            if self.latest_timestamp and latest_row["timestamp"] < self.latest_timestamp:
+                # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
+                # duplicate rows from the same second which breaks GraphQLStream's detection
+                # of out-of-order rows. We can simply skip these rows because they've already
+                # been posted
+                continue
+            self.latest_timestamp = latest_row["timestamp"]
+            yield latest_row
 
 
 class SyntheticCheckStream(NewRelicStream):
     name = "synthetic_check"
 
-    nqrl_query = "SELECT * FROM SyntheticCheck SINCE '{}' ORDER BY timestamp LIMIT MAX"
+    nqrl_query = "SELECT * FROM SyntheticCheck SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
 
     schema = PropertiesList(
         Property("duration", NumberType),
