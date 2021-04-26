@@ -94,19 +94,22 @@ class NewRelicStream(GraphQLStream):
     def parse_response(self, response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
         resp_json = response.json()
-        results = resp_json["data"]["actor"]["account"]["nrql"]["results"]
-        self.results_count = len(results)
-        for row in results:
-            latest_row = self.transform_row(row)
-            if self.latest_timestamp and latest_row["timestamp"] < self.latest_timestamp:
-                # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
-                # duplicate rows from the same second which breaks GraphQLStream's detection
-                # of out-of-order rows. We can simply skip these rows because they've already
-                # been posted
-                continue
-            self.latest_timestamp = latest_row["timestamp"]
-            yield latest_row
-
+        try:
+            results = resp_json["data"]["actor"]["account"]["nrql"]["results"]
+            self.results_count = len(results)
+            for row in results:
+                latest_row = self.transform_row(row)
+                if self.latest_timestamp and latest_row["timestamp"] < self.latest_timestamp:
+                    # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
+                    # duplicate rows from the same second which breaks GraphQLStream's detection
+                    # of out-of-order rows. We can simply skip these rows because they've already
+                    # been posted
+                    continue
+                self.latest_timestamp = latest_row["timestamp"]
+                yield latest_row
+        except Exception as err:
+            self.logger.warn(f"Problem with response: {resp_json}")
+            raise err
 
 class SyntheticCheckStream(NewRelicStream):
     name = "synthetic_check"
