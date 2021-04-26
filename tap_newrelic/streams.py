@@ -112,7 +112,7 @@ class NewRelicStream(GraphQLStream):
             raise err
 
 class SyntheticCheckStream(NewRelicStream):
-    name = "synthetic_check"
+    name = "synthetic_checks"
 
     nqrl_query = "SELECT * FROM SyntheticCheck SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
 
