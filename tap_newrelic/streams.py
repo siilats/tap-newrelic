@@ -79,7 +79,7 @@ class NewRelicStream(GraphQLStream):
 
         # Annoyingly, NRQL's `SINCE` is inclusive, so at the end we get the same token
         # twice
-        if previous_token and self.latest_row["timestamp"] == previous_token:
+        if previous_token and self.latest_row["timestamp"] <= previous_token:
             return None
 
         return self.latest_row["timestamp"]
