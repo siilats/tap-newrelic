@@ -127,6 +127,7 @@ class SyntheticCheckStream(NewRelicStream):
         Property("monitor_extended_type", StringType), # TODO: enum
         Property("monitor_id", StringType),
         Property("monitor_name", StringType),
+        Property("error", StringType),
         Property("result", StringType), # TODO: enum
         Property("secure_credentials", StringType),
         Property("timestamp", DateTimeType), # TODO: milisecodns epoch
