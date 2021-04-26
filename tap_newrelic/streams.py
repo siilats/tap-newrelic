@@ -77,7 +77,9 @@ class NewRelicStream(GraphQLStream):
         if len(resp_json["data"]["actor"]["account"]["nrql"]["results"]) == 0:
             return None
 
-        if previous_token and self.latest_row["timestamp"] <= previous_token:
+        # Annoyingly, NRQL's `SINCE` is inclusive, so at the end we get the same token
+        # twice
+        if previous_token and self.latest_row["timestamp"] == previous_token:
             return None
 
         return self.latest_row["timestamp"]
@@ -92,6 +94,17 @@ class NewRelicStream(GraphQLStream):
         for row in resp_json["data"]["actor"]["account"]["nrql"]["results"]:
             self.latest_row = self.transform_row(row)
             yield self.latest_row
+
+    def get_replication_key_signpost(
+        self, partition: Optional[dict]
+    ):
+        # This represents the highest allowed replication_key. I'm sure
+        # it's useful for partitioning or something. The SDK sets the
+        # default to the time that the stream was started, but most streams
+        # including this one continue to get records, so new records may be
+        # added while the pipeline runs. Here we override it to explictly
+        # disable the feature.
+        return None
 
 
 class SyntheticCheckStream(NewRelicStream):
