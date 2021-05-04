@@ -23,6 +23,9 @@ from singer_sdk.typing import (
     StringType,
 )
 
+def unix_timestamp_to_iso8601(timestamp):
+    return str(pendulum.from_timestamp(timestamp / 1000))
+
 class NewRelicStream(GraphQLStream):
     """NewRelic stream class."""
 
@@ -30,9 +33,11 @@ class NewRelicStream(GraphQLStream):
     replication_method = "INCREMENTAL"
     replication_key = "timestamp"
     is_timestamp_replication_key = True
-    is_sorted = True
+    # is_sorted = True
+    is_sorted = False # TODO: temporary workaround for https://gitlab.com/meltano/singer-sdk/-/issues/120
     latest_timestamp = None
 
+    datetime_format = "%Y-%m-%d %H:%M:%S"
     query = """
         query ($accountId: Int!, $query: Nrql!) {
           actor {
@@ -61,22 +66,15 @@ class NewRelicStream(GraphQLStream):
 
     def get_url_params(self, partition, next_page_token: Optional[DateTimeType] = None) -> dict:
         next_page_token = next_page_token or self.get_starting_timestamp(partition)
+        nqrl = self.nqrl_query.format(
+            next_page_token.strftime(self.datetime_format),
+            self.get_replication_key_signpost(partition).strftime(self.datetime_format),
+        )
+        self.logger.debug(nqrl)
         return {
             "accountId": self.config.get("account_id"),
-            "query": self.nqrl_query.format(
-                next_page_token.strftime("%Y-%m-%d %H:%M:%S"),
-                self.get_replication_key_signpost(partition=partition).strftime("%Y-%m-%d %H:%M:%S"),
-            )
+            "query": nqrl,
         }
-
-    def prepare_request_payload(
-        self, partition: Optional[dict], next_page_token: Optional[DateTimeType] = None
-    ) -> Optional[dict]:
-        res = super().prepare_request_payload(partition, next_page_token)
-        res["query"] = self.query # TODO: GraphQLStream wraps the query in `query { }` but we need args
-        nqrl = res["variables"]["query"]
-        self.logger.debug(f"nqrl: {nqrl}")
-        return res
 
     def get_next_page_token(self, response, previous_token):
         latest = pendulum.parse(self.latest_timestamp)
@@ -87,10 +85,6 @@ class NewRelicStream(GraphQLStream):
 
         return latest
 
-    def transform_row(self, row: dict) -> dict:
-        row["timestamp"] = str(pendulum.from_timestamp(row["timestamp"] / 1000))
-        return { inflection.underscore(k): v for k, v in row.items() }
-
     def parse_response(self, response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
         resp_json = response.json()
@@ -98,18 +92,24 @@ class NewRelicStream(GraphQLStream):
             results = resp_json["data"]["actor"]["account"]["nrql"]["results"]
             self.results_count = len(results)
             for row in results:
-                latest_row = self.transform_row(row)
+                latest_row = self.transform(row)
                 if self.latest_timestamp and latest_row["timestamp"] < self.latest_timestamp:
                     # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
                     # duplicate rows from the same second which breaks GraphQLStream's detection
                     # of out-of-order rows. We can simply skip these rows because they've already
                     # been posted
+                    self.logger.info(f"skipping duplicate {latest_row['timestamp']}")
                     continue
                 self.latest_timestamp = latest_row["timestamp"]
                 yield latest_row
         except Exception as err:
             self.logger.warn(f"Problem with response: {resp_json}")
             raise err
+
+    def transform(self, row: dict, partition: Optional[dict] = None) -> dict:
+        row["timestamp"] = unix_timestamp_to_iso8601(row["timestamp"])
+        return { inflection.underscore(k): v for k, v in row.items() }
+
 
 class SyntheticCheckStream(NewRelicStream):
     name = "synthetic_checks"
@@ -134,7 +134,7 @@ class SyntheticCheckStream(NewRelicStream):
         Property("error", StringType),
         Property("result", StringType), # TODO: enum
         Property("secure_credentials", StringType),
-        Property("timestamp", DateTimeType), # TODO: milisecodns epoch
+        Property("timestamp", DateTimeType),
         Property("total_request_body_size", IntegerType),
         Property("total_request_header_size", IntegerType),
         Property("total_response_body_size", IntegerType),
