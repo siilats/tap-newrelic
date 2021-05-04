@@ -33,8 +33,7 @@ class NewRelicStream(GraphQLStream):
     replication_method = "INCREMENTAL"
     replication_key = "timestamp"
     is_timestamp_replication_key = True
-    # is_sorted = True
-    is_sorted = False # TODO: temporary workaround for https://gitlab.com/meltano/singer-sdk/-/issues/120
+    is_sorted = True
     latest_timestamp = None
 
     datetime_format = "%Y-%m-%d %H:%M:%S"
