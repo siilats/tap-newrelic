@@ -127,7 +127,7 @@ class SyntheticCheckStream(NewRelicStream):
         Property("minion_container_system_version", StringType),
         Property("minion_deployment_mode", StringType),
         Property("minion_id", StringType),
-        Property("monitor_extended_type", StringType), # TODO: enum
+        Property("monitor_extendedType", StringType), # TODO: enum
         Property("monitor_id", StringType),
         Property("monitor_name", StringType),
         Property("error", StringType),
@@ -140,4 +140,55 @@ class SyntheticCheckStream(NewRelicStream):
         Property("total_response_header_size", IntegerType),
         Property("type", StringType), # TODO: enum
         Property("type_label", StringType),
+    ).to_dict()
+
+class MobileAppStream(NewRelicStream):
+    name = "mobile_app"
+
+    nqrl_query = "SELECT * FROM mobile_app SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
+
+    schema = PropertiesList(
+        Property("app_mode", StringType),
+        Property("app_build", StringType),
+        Property("app_id", IntegerType),
+        Property("app_name", StringType),
+        Property("app_version", StringType),
+        Property("app_version_id", IntegerType),
+        Property("asn", StringType),
+        Property("asn_owner", StringType),
+        Property("brand", StringType),
+        Property("carrier", StringType),
+        Property("city", StringType),
+        Property("consultant_gid", StringType),
+        Property("countryCode", StringType),
+        Property("customer_gid", StringType),
+        Property("datetime", StringType),
+        Property("device", StringType),
+        Property("device_group", StringType),
+        Property("device_manufacturer", StringType),
+        Property("device_model", StringType),
+        Property("deviceType", StringType),
+        Property("device_uuid", StringType),
+        Property("enabled_features", StringType),
+        Property("entityGuid", StringType),
+        Property("event_id", StringType),
+        Property("last_interaction", StringType),
+        Property("mem_usage_mb", NumberType),
+        Property("name", StringType),
+        Property("new_relic_agent", StringType),
+        Property("new_relic_version", StringType),
+        Property("os_major_version", StringType),
+        Property("os_name", StringType),
+        Property("os_version", StringType),
+        Property("platform", StringType),
+        Property("region_code", StringType),
+        Property("screen", StringType),
+        Property("session_duration", NumberType),
+        Property("session_id", StringType),
+        Property("time_since_load", NumberType),
+        Property("timestamp", DateTimeType),
+        Property("tracking_id", StringType),
+        Property("triggered_from", StringType),
+        Property("upgrade_from", StringType),
+        Property("uuid", StringType),
     ).to_dict()

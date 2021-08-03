@@ -18,10 +18,12 @@ from singer_sdk.typing import (
 
 from tap_newrelic.streams import (
     SyntheticCheckStream,
+    MobileAppStream
 )
 
 STREAM_TYPES = [
     SyntheticCheckStream,
+    MobileAppStream
 ]
 
 class TapNewRelic(Tap):
