@@ -29,9 +29,9 @@ def unix_timestamp_to_iso8601(timestamp):
 class NewRelicStream(GraphQLStream):
     """NewRelic stream class."""
 
-    primary_keys = ["id"]
+    primary_keys = []#["id"]
     replication_method = "INCREMENTAL"
-    replication_key = "timestamp"
+    replication_key = "datetime"
     is_timestamp_replication_key = True
     is_sorted = True
     latest_timestamp = None
@@ -109,7 +109,6 @@ class NewRelicStream(GraphQLStream):
         row["timestamp"] = unix_timestamp_to_iso8601(row["timestamp"])
         return { inflection.underscore(k): v for k, v in row.items() }
 
-
 class SyntheticCheckStream(NewRelicStream):
     name = "synthetic_checks"
 
@@ -145,50 +144,99 @@ class SyntheticCheckStream(NewRelicStream):
 class MobileAppStream(NewRelicStream):
     name = "mobile_app"
 
-    nqrl_query = "SELECT * FROM mobile_app SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
-
     schema = PropertiesList(
+        Property("action", StringType),
+        Property("action_type", StringType),
+        Property("appointment_status", StringType),
         Property("app_mode", StringType),
         Property("app_build", StringType),
         Property("app_id", IntegerType),
         Property("app_name", StringType),
         Property("app_version", StringType),
         Property("app_version_id", IntegerType),
+        Property("architecture", StringType),
         Property("asn", StringType),
         Property("asn_owner", StringType),
         Property("brand", StringType),
+        Property("camera_permission_state", StringType),
         Property("carrier", StringType),
+        Property("category", StringType),
+        Property("change_to_state", StringType),
+        Property("changed_to_state", StringType),
+        Property("compression_quality", StringType),
+        Property("connectivity_status", StringType),
         Property("city", StringType),
+        Property("coaching_completed", StringType),
+        Property("coaching_step", StringType),
         Property("consultant_gid", StringType),
-        Property("countryCode", StringType),
+        Property("contained_smiley", StringType),
+        Property("country_code", StringType),
         Property("customer_gid", StringType),
         Property("datetime", StringType),
         Property("device", StringType),
         Property("device_group", StringType),
         Property("device_manufacturer", StringType),
         Property("device_model", StringType),
-        Property("deviceType", StringType),
+        Property("device_type", StringType),
         Property("device_uuid", StringType),
+        Property("duration", StringType),
+        Property("enabled_accessibilities", StringType),
         Property("enabled_features", StringType),
-        Property("entityGuid", StringType),
+        Property("entity_guid", StringType),
         Property("event_id", StringType),
+        Property("input_type", StringType),
+        Property("install", StringType),
+        Property("installation_id", StringType),
+        Property("interaction", StringType),
         Property("last_interaction", StringType),
+        Property("length", StringType),
         Property("mem_usage_mb", NumberType),
+        Property("mobile_os", StringType),
         Property("name", StringType),
         Property("new_relic_agent", StringType),
         Property("new_relic_version", StringType),
+        Property("occurrence_timestamp", StringType),
+        Property("opening_hours_available", StringType),
+        Property("orientation", StringType),
+        Property("os_build", StringType),
         Property("os_major_version", StringType),
         Property("os_name", StringType),
         Property("os_version", StringType),
+        Property("page_id", StringType),
+        Property("partner_gid", StringType),
+        Property("phone_number", StringType),
         Property("platform", StringType),
+        Property("platform_version", StringType),
+        Property("product_id", StringType),
+        Property("push_notification", StringType),
+        Property("push_opened", StringType),
+        Property("rating", StringType),
         Property("region_code", StringType),
+        Property("registration_type", StringType),
+        Property("remote_app_name", StringType),
+        Property("reported_timestamp_ms", StringType),
+        Property("request_code_result", StringType),
+        Property("request_code_status", StringType),
+        Property("run_time", StringType),
         Property("screen", StringType),
+        Property("scrolling_time", StringType),
+        Property("session_crashed", StringType),
         Property("session_duration", NumberType),
         Property("session_id", StringType),
+        Property("size", StringType),
+        Property("story_id", StringType),
         Property("time_since_load", NumberType),
         Property("timestamp", DateTimeType),
+        Property("to_orientation", StringType),
         Property("tracking_id", StringType),
         Property("triggered_from", StringType),
+        Property("triggered_from_item", StringType),
+        Property("unread_messages", StringType),
         Property("upgrade_from", StringType),
+        Property("url", StringType),
         Property("uuid", StringType),
+        Property("video_url", StringType),
+        Property("video_view_through_rate", StringType),
     ).to_dict()
+    nqrl_query = "SELECT * FROM mobile_app SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
+

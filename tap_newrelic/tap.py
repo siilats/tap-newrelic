@@ -22,7 +22,7 @@ from tap_newrelic.streams import (
 )
 
 STREAM_TYPES = [
-    SyntheticCheckStream,
+    # SyntheticCheckStream,
     MobileAppStream
 ]
 
