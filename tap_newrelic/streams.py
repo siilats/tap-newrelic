@@ -31,7 +31,7 @@ class NewRelicStream(GraphQLStream):
 
     primary_keys = []#["id"]
     replication_method = "INCREMENTAL"
-    replication_key = "datetime"
+    replication_key = "timestamp"
     is_timestamp_replication_key = True
     is_sorted = True
     latest_timestamp = None
