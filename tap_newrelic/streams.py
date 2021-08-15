@@ -29,7 +29,7 @@ def unix_timestamp_to_iso8601(timestamp):
 class NewRelicStream(GraphQLStream):
     """NewRelic stream class."""
 
-    primary_keys = []#["id"]
+    primary_keys = ["event_id"]#["id"]
     replication_method = "INCREMENTAL"
     replication_key = "timestamp"
     is_timestamp_replication_key = True
@@ -93,6 +93,13 @@ class NewRelicStream(GraphQLStream):
             for row in results:
                 latest_row = self.transform(row)
                 if self.latest_timestamp and latest_row["timestamp"] < self.latest_timestamp:
+                    # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
+                    # duplicate rows from the same second which breaks GraphQLStream's detection
+                    # of out-of-order rows. We can simply skip these rows because they've already
+                    # been posted
+                    self.logger.info(f"skipping duplicate {latest_row['timestamp']}")
+                    continue
+                if self.event_id and latest_row["timestamp"] < self.latest_timestamp:
                     # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
                     # duplicate rows from the same second which breaks GraphQLStream's detection
                     # of out-of-order rows. We can simply skip these rows because they've already
