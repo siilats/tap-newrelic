@@ -143,7 +143,7 @@ class SyntheticCheckStream(NewRelicStream):
 
 class MobileAppStream(NewRelicStream):
     name = "mobile_app"
-    primary_keys = ["customer_gid", "name", "timestamp", "event_id"]  # ["id"]
+    primary_keys = [ "timestamp", "event_id"]  # ["id"]
     schema = PropertiesList(
         Property("action", StringType),
         Property("action_type", StringType),
