@@ -29,7 +29,7 @@ def unix_timestamp_to_iso8601(timestamp):
 class NewRelicStream(GraphQLStream):
     """NewRelic stream class."""
 
-    primary_keys = ["event_id"]#["id"]
+    primary_keys = []#["id"]
     replication_method = "INCREMENTAL"
     replication_key = "timestamp"
     is_timestamp_replication_key = True
@@ -99,13 +99,6 @@ class NewRelicStream(GraphQLStream):
                     # been posted
                     self.logger.info(f"skipping duplicate {latest_row['timestamp']}")
                     continue
-                if self.event_id and latest_row["timestamp"] < self.latest_timestamp:
-                    # Because NRQL doesn't take timestamps down to miliseconds, sometimes you get
-                    # duplicate rows from the same second which breaks GraphQLStream's detection
-                    # of out-of-order rows. We can simply skip these rows because they've already
-                    # been posted
-                    self.logger.info(f"skipping duplicate {latest_row['timestamp']}")
-                    continue
                 self.latest_timestamp = latest_row["timestamp"]
                 yield latest_row
         except Exception as err:
@@ -150,7 +143,7 @@ class SyntheticCheckStream(NewRelicStream):
 
 class MobileAppStream(NewRelicStream):
     name = "mobile_app"
-
+    primary_keys = ["customer_gid", "name", "timestamp", "event_id"]  # ["id"]
     schema = PropertiesList(
         Property("action", StringType),
         Property("action_type", StringType),
