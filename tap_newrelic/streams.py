@@ -126,7 +126,7 @@ class SyntheticCheckStream(NewRelicStream):
         Property("minion_container_system_version", StringType),
         Property("minion_deployment_mode", StringType),
         Property("minion_id", StringType),
-        Property("monitor_extendedType", StringType), # TODO: enum
+        Property("monitor_extended_type", StringType), # TODO: enum
         Property("monitor_id", StringType),
         Property("monitor_name", StringType),
         Property("error", StringType),
@@ -143,7 +143,7 @@ class SyntheticCheckStream(NewRelicStream):
 
 class MobileAppStream(NewRelicStream):
     name = "mobile_app"
-
+    primary_keys = ["customer_gid", "name", "timestamp", "event_id"]  # ["id"]
     schema = PropertiesList(
         Property("action", StringType),
         Property("action_type", StringType),
