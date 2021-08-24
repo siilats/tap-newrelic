@@ -144,6 +144,8 @@ class SyntheticCheckStream(NewRelicStream):
 class MobileAppStream(NewRelicStream):
     name = "mobile_app"
     primary_keys = ["timestamp", "event_id"]  # ["id"]
+    nqrl_query = "SELECT * FROM mobile_app SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
+
     schema = PropertiesList(
         Property("action", StringType),
         Property("action_type", StringType),
@@ -164,9 +166,9 @@ class MobileAppStream(NewRelicStream):
         Property("category", StringType),
         Property("change_to_state", StringType),
         Property("changed_to_state", StringType),
+        Property("city", StringType),
         Property("compression_quality", StringType),
         Property("connectivity_status", StringType),
-        Property("city", StringType),
         Property("coaching_completed", StringType),
         Property("coaching_step", StringType),
         Property("consultant_gid", StringType),
@@ -252,5 +254,47 @@ class MobileAppStream(NewRelicStream):
         Property("video_url", StringType),
         Property("video_view_through_rate", StringType),
     ).to_dict()
-    nqrl_query = "SELECT * FROM mobile_app SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
+
+class MobileAppConnectStream(NewRelicStream):
+    name = "mobile_connect_app"
+    primary_keys = ["timestamp"]  # ["id"]
+    nqrl_query = "SELECT * FROM mobile_connect_app SINCE '{}' UNTIL '{}' ORDER BY timestamp LIMIT MAX"
+
+    schema = PropertiesList(
+        Property("app_build", StringType),
+        Property("app_id", IntegerType),
+        Property("app_name", StringType),
+        Property("app_version", StringType),
+        Property("app_version_id", IntegerType),
+        Property("carrier", StringType),
+        Property("city", StringType),
+        Property("country_code", StringType),
+        Property("device", StringType),
+        Property("device_group", StringType),
+        Property("device_manufacturer", StringType),
+        Property("device_model", StringType),
+        Property("device_type", StringType),
+        Property("device_uuid", StringType),
+        Property("entity_guid", StringType),
+        Property("hours", StringType),
+        Property("last_interaction", StringType),
+        Property("measured_timestamp", StringType),
+        Property("mem_usage_mb", NumberType),
+        Property("name", StringType),
+        Property("new_relic_agent", StringType),
+        Property("new_relic_version", StringType),
+        Property("os_major_version", StringType),
+        Property("os_name", StringType),
+        Property("os_version", StringType),
+        Property("platform", StringType),
+        Property("reason", StringType),
+        Property("region_code", StringType),
+        Property("serial_number", StringType),
+        Property("session_duration", NumberType),
+        Property("session_id", StringType),
+        Property("time_since_load", NumberType),
+        Property("timestamp", DateTimeType),
+        Property("uuid", StringType),
+        Property("vendor", StringType),
+    ).to_dict()
 
